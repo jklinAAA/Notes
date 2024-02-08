@@ -1338,3 +1338,525 @@ ContentResolver的update()方法实现，代码如下所示：
 现在，我们自己编写的later懒加载函数就已经完成了，你可以直接使用
 
 它来替代之前的lazy函数，如下所示：![image-20240207140759589](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207140759589.png)
+
+
+
+
+
+##### 使用通知
+
+###### 创建通知渠道
+
+- 首先需要一个NotificationManager对通知进行管理，可以通过调用Context的getSystemService()方法获取。getSystemService()方法接收一个字符串参数用于确定获取系统的哪个服务，这里我们传入Context.NOTIFICATION_SERVICE即可。因此，获取NotificationManager的实例就可以写成：![image-20240207162323679](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207162323679.png)
+
+接下来要使用NotificationChannel类构建一个通知渠道，并调用NotificationManager的createNotificationChannel()方法完成创建。由于NotificationChannel类和createNotificationChannel()方法都是Android 8.0系统中新增的API，因此我们在使用的时候还需要进行版本判断才可以，写法如下：
+
+![image-20240207162358837](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207162358837.png)
+
+创建一个通知渠道至少需要渠道ID、渠道名称以及重要等级这3个参数，其中渠道ID可以随便定义，只要保证全局唯一性就可以。
+
+
+
+###### 通知的基本用法
+
+- 首先需要使用一个Builder构造器来创建Notification对象，使用AndroidX库中提供的兼容API。AndroidX库中提供了一个NotificationCompat类，使用这个类的构造器创建Notification对象，就可以保证我们的程序在所有Android系统版本上都能正常工作了，代码如下所示：![image-20240207162615983](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207162615983.png)
+
+- 我们可以在最终的build()方法之前连缀任意多的设置方法来创
+
+  建一个丰富的Notification对象，先来看一些最基本的设置：![image-20240207162657316](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207162657316.png)
+
+只需要调用NotificationManager的notify()方法就可以让通知显示出来了。notify()方法接收两个参数：第一个参数是id，要保证为每个通知指定的id都是不同的；第二个参数则是Notification对象，这里直接将我们刚刚创建好的Notification对象传入即可。因此，显示一个通知就可以写成：![image-20240207162818674](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207162818674.png)
+
+
+
+具体的例子：
+
+- 新建一个NotificationTest项目，并修改activity_main.xml中的代码，如下所示：![image-20240207162948439](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207162948439.png)
+
+修改MainActivity中的代码，如下所示：![image-20240207163027875](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207163027875.png)
+
+现在可以来运行一下程序了，其实MainActivity一旦打开之后，通知渠道就已经创建成功了，我们可以进入应用程序设置当中查看。依次点击设置→应用和通知→NotificationTest→通知，如图9.6所示。![image-20240207163126617](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207163126617.png)
+
+
+
+- 其实要想实现通知的点击效果，我们还需要在代码中进行相应的设置，这就涉及了一个新的概念——PendingIntent。
+- PendingIntent倾向于在某个合适的时机执行某个动作。所以，也可以把PendingIntent简单地理解为延迟执行的Intent。
+- 首先需要准备好另一个Activity，右击com.example.notificationtest包→New→Activity→Empty Activity，新建NotificationActivity。然后修改activity_notification.xml中的代码，如下所示：![image-20240207163609786](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207163609786.png)
+
+![image-20240207163625413](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207163625413.png)
+
+修改MainActivity中的代码，给通知加入点击功能，如下所示：![image-20240207163645834](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207163645834.png)
+
+现在重新运行一下程序，并点击“Send Notice”按钮，依旧会发出一条通知。然后下拉系统状态栏，点击一下该通知，就会打开NotificationActivity的界面了，如图9.9所示![image-20240207163730375](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207163730375.png)
+
+
+
+- 如果我们没有在代码中对该通知进行取消，它就会一直显示在系统的状态栏上。解决的方法有两种：一种是在NotificationCompat.Builder中再连缀一个setAutoCancel()方法，一种是显式地调用NotificationManager的cancel()方法将它取消。两种方法我们都学习一下
+
+  第一种方法写法如下：![image-20240207163839727](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207163839727.png)
+
+可以看到，setAutoCancel()方法传入true，就表示当点击这个通知的时候，通知会自动取消。
+
+第二种方法写法如下：![image-20240207163901002](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207163901002.png)
+
+这里我们在cancel()方法中传入了1，这个1是什么意思呢？还记得在创建通知的时候给每条通知指定的id吗？当时我们给这条通知设置的id就是1。因此，如果你想取消哪条通知，在cancel()方法中传入该通知的id就行了。
+
+
+
+###### 通知的进阶技巧
+
+省略的通知内容![image-20240207164220792](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207164220792.png)
+
+- 如果你真的非常需要在通知当中显示一段长文字，Android也是支持
+
+  的，通过setStyle()方法就可以做到，具体写法如下![image-20240207164235556](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207164235556.png)
+
+![image-20240207164315929](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207164315929.png)
+
+- 除了显示长文字之外，通知里还可以显示一张大图片，具体用法是基本相似的：![image-20240207164340513](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207164340513.png)
+
+![image-20240207164402003](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207164402003.png)
+
+- 通知渠道的重要等级越高，发出的通知就越容易获得用户的注意。比如高重要等级的通知渠道发出的通知可以弹出横幅、发出声音，而低重要等级的通知渠道发出的通知不仅可能会在某些情况下被隐藏，而且可能会被改变显示的顺序，将其排在更重要的通知之后。
+
+- 开发者只能在创建通知渠道的时候为它指定初始的重要等级，如果用户不认可这个重要等级的话，可以随时进行修改，开发者对此无权再进行调整和变更，因为通知渠道一旦创建就不能再通过代码修改了。
+
+- 创建一个新的通知渠道来测试。修改MainActivity中的代码，如下所示![image-20240207164756154](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207164756154.png)
+
+这里我们将通知渠道的重要等级设置成了“高”，表示这是一条非常重要的通知，要求用户必须立刻看到。现在重新运行一下程序，并点击“Sendnotice”按钮，效果如图9.13所示。	![image-20240207164814874](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207164814874.png)
+
+- 可以看到，这次的通知不是在系统状态栏显示一个小图标了，而是弹出了一个横幅，并附带了通知的详细内容，表示这是一条非常重要的通知。不管用户现在是在玩游戏还是看电影，这条通知都会显示在最上方，以此引起用户的注意。
+
+
+
+
+
+##### 调用摄像头拍照
+
+- 新建一个CameraAlbumTest项目，然后修改activity_main.xml中的代码，如下所示：![image-20240207165003779](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207165003779.png)
+
+布局文件中只有两个控件：一个Button和一个ImageView。Button是用于打开摄像头进行拍照的，而ImageView则是用于将拍到的图片显示出来。
+
+然后开始编写调用摄像头的具体逻辑，修改MainActivity中的代码，如下
+
+所示：![image-20240207165115910](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207165115910.png)
+
+![image-20240207165126386](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207165126386.png)
+
+在AndroidManifest.xml中对它进行注册才行，代码如下所示：![image-20240207165217043](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207165217043.png)
+
+
+
+右击res目录→New→Directory，创建一个xml目录，接着右击xml目录→New→File，创建一个file_paths.xml文件。然后修改file_paths.xml文件中的内容，如下所示：
+
+![image-20240207165333344](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207165333344.png)
+
+external-path就是用来指定Uri共享路径的，name属性的值可以随便填，path属性的值表示共享的具体路径。这里使用一个单斜线表示将整个SD卡进行共享，当然你也可以仅共享存放output_image.jpg这张图片的路径。
+
+
+
+##### 从相册中选择图片
+
+- 还是在CameraAlbumTest项目的基础上进行修改，编辑activity_main.xml文件，在布局中添加一个按钮，用于从相册中选择图片，代码如下所示：![image-20240207165535872](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207165535872.png)
+
+然后修改MainActivity中的代码，加入从相册选择图片的逻辑，代码如下
+
+所示：![image-20240207165550830](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207165550830.png)	![image-20240207165602189](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207165602189.png)
+
+
+
+
+
+##### 播放音频
+
+- 在Android中播放音频文件一般是使用MediaPlayer类实现的，它对多种格式的音频文件提供了非常全面的控制方法，从而使播放音乐的工作变得十分简单。![image-20240207165740554](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207165740554.png)
+
+![image-20240207165755167](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207165755167.png)
+
+- 梳理一下MediaPlayer的工作流程。首先需要创建一个MediaPlayer对象，然后调用setDataSource()方法设置音频文件的路径，再调用prepare()方法使MediaPlayer进入准备状态，接下来调用start()方法就可以开始播放音频，调用pause()方法就会暂停播放，调用reset()方法就会停止播放。
+
+- 新建一个PlayAudioTest项目，然后修改activity_main.xml中的代码，如下所示：
+
+![image-20240207165835293](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207165835293.png)
+
+MediaPlayer可以用于播放网络、本地以及应用程序安装包中的音频。这里简单起见，我们就以播放应用程序安装包中的音频来举例吧。
+
+首先来创建assets目录吧，它必须创建在app/src/main这个目录下面，也就是和java、res这两个目录是平级的。右击app/src/main→New→Directory，在弹出的对话框中输入“assets”，目录就创建完成了。由于我们要播放音频文件，这里我提前准备好了一份music.mp3资源（资源下载方式见前言），将它放入assets目录中即可，如图9.18所示。![image-20240207165956368](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207165956368.png)
+
+然后修改MainActivity中的代码，如下所示：![image-20240207170011253](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207170011253.png)
+
+![image-20240207170025017](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207170025017.png)
+
+
+
+##### 播放视频
+
+- 播放视频文件其实并不比播放音频文件复杂，主要是使用VideoView类来实现的。![image-20240207170140217](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207170140217.png)
+
+- 通过一个实际的例子来学习一下吧，新建PlayVideoTest项目，然
+
+  后修改activity_main.xml中的代码，如下所示：![image-20240207170215912](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207170215912.png)
+
+VideoView不支持直接播放assets目录下的视频资源，所以我们只能寻找其他的解决方案。res目录下允许我们再创建一个raw目录，像诸如音频、视频之类的资源文件也可以放在这里，并且VideoView是可以直接播放这个目录下的视频资源的。
+
+现在右击app/src/main/res→New→Directory，在弹出的对话框中输入“raw”，完成raw目录的创建，并把要播放的视频资源放在里面。这里我提前准备了一个video.mp4资源（资源下载方式见前言），如图9.20所示，你也可以使用自己准备的视频资源。![image-20240207170335790](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207170335790.png)
+
+然后修改MainActivity中的代码，如下所示：![image-20240207170351962](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207170351962.png)
+
+![image-20240207170411656](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207170411656.png)
+
+
+
+
+
+
+
+##### Kotlin**课堂：使用**infix函数构建更可读的语法
+
+- to并不是Kotlin语言中的一个关键字，之所以我们能够使用A to B
+  这样的语法结构，是因为Kotlin提供了一种高级语法糖特性：infix函数。
+- infix函数也并不是什么难理解的事物，它只是把编程语言函数调用的语法规则调整了一下而已，比如A to B这样的写法，实际上等价于A.to(B)的写法
+
+
+
+- 通过两个具体的例子来学习一下infix函数的用法，先从简单
+
+  的例子看起。![image-20240207170640168](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207170640168.png)
+
+首先，除去最前面的infix关键字不谈，这是一个String类的扩展函数。我们给String类添加了一个beginsWith()函数，它也是用于判断一个字符串是否是以某个指定参数开头的，并且它的内部实现就是调用的String类的startsWith()函数。
+
+但是加上了infix关键字之后，beginsWith()函数就变成了一个infix函数，这样除了传统的函数调用方式之外，我们还可以用一种特殊的语法糖格式调用beginsWith()函数，如下所示：![image-20240207170824675](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207170824675.png)	从这个例子就能看出，infix函数的语法规则并不复杂，上述代码其实就是调用的" Hello Kotlin "这个字符串的beginsWith()函数，并传入了一个"Hello"字符串作为参数。但是infix函数允许我们将函数调用时的小数点、括号等计算机相关的语法去掉，从而使用一种更接近英语的语法来编写程序，让代码看起来更加具有可读性。另外，infix函数由于其语法糖格式的特殊性，有两个比较严格的限制：首先，infix函数是不能定义成顶层函数的，它必须是某个类的成员函数，可以使用扩展函数的方式将它定义到某个类当中；其次，infix函数必须接收且只能接收一个参数，至于参数类型是没有限制的。只有同时满足这两点，infix函数的语法糖才具备使用的条件
+
+- 再看一个复杂一些的例子。比如这里有一个集合，如果想要判断集合中是否包括某个指定元素，一般可以这样写：![image-20240207170917203](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207170917203.png)
+
+很简单对吗？但我们仍然可以借助infix函数让这段代码变得更加具有可读性。在infix.kt文件中添加如下代码：![image-20240207170933128](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207170933128.png)
+
+可以看到，我们给Collection接口添加了一个扩展函数，这是因为Collection是Java以及Kotlin所有集合的总接口，因此给Collection添加一个has()函数，那么所有集合的子类就都可以使用这个函数了。另外，这里还使用了泛型函数的定义方法，从而使得has()函数可以接收任意具体类型的参数。而这个函数内部的实现逻辑就相当简单了，只是调用了Collection接口中的contains()函数而已。也就是说，has()函数和contains()函数的功能实际上是一模一样的，只是它多了一个infix关键字，从而拥有了infix函数的语法糖功能。
+
+现在我们就可以使用如下的语法来判断集合中是否包括某个指定的元素：![image-20240207171024035](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240207171024035.png)
+
+
+
+
+
+#### **Service**
+
+###### **Service**是什么
+
+- Service是Android中实现程序后台运行的解决方案，它非常适合执行那些不需要和用户交互而且还要求长期运行的任务。Service的运行不依赖于任何用户界面，即使程序被切换到后台，或者用户打开了另外一个应用程序，Service仍然能够保持正常运行。
+- Service并不会自动开启线程，所有的代码都是默认运行在主线程当中的。也就是说，我们需要在Service的内部手动创建子线程，并在这里执行具体的任务，否则就有可能出现主线程被阻塞的情况。
+
+##### 
+
+##### **Android**多线程编程
+
+###### 线程的基本用法
+
+- 定义一个线程只需要新建一个类继承自Thread，然后重写父类的run()方法，并在里面编写耗时逻辑即可，如下所示：![image-20240208112830939](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208112830939.png)
+
+- 启动线程只需要创建MyThread的实例，然后调用它的start()方法即可，这样run()方法中的代码就会在子线程当中运行了，如下所示：![image-20240208112927121](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208112927121.png)
+
+- 使用继承的方式耦合性有点高，我们会更多地选择使用实现
+
+  Runnable接口的方式来定义一个线程，如下所示：![image-20240208112959000](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208112959000.png)
+
+如果使用了这种写法，启动线程的方法也需要进行相应的改变，如下所示：![image-20240208113013031](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208113013031.png)
+
+- 如果你不想专门再定义一个类去实现Runnable接口，也可以使用Lambda的方式，这种写法更为常见，如下所示：![image-20240208113206181](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208113206181.png)
+
+- 而Kotlin还给我们提供了一种更加简单的开启线程的方式，写法如下：![image-20240208113222884](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208113222884.png)
+
+
+
+###### 在子线程中更新**UI**
+
+- 和许多其他的GUI库一样，Android的UI也是线程不安全的。也就是说，如果想要更新应用程序里的UI元素，必须在主线程中进行，否则就会出现异常。
+
+- 新建一个AndroidThreadTest项目，然后修改activity_main.xml中的代码，如下所示：![image-20240208113448888](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208113448888.png)
+
+修改MainActivity中的代码，如下所示：![image-20240208113502560](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208113502560.png)
+
+![image-20240208113510836](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208113510836.png)
+
+
+
+###### 解析异步消息处理机制
+
+- Android中的异步消息处理主要由4个部分组成：Message、Handler、MessageQueue和Looper。
+- **Message**
+
+Message是在线程之间传递的消息，它可以在内部携带少量的信息，用于在不同线程之间传递数据。上一小节中我们使用到了Message的what字段，除此之外还可以使用arg1和arg2字段来携带一些整型数据，使用obj字段携带一个Object对象。
+
+2. **Handler**
+
+Handler顾名思义也就是处理者的意思，它主要是用于发送和处理消息的。发送消息一般是使用Handler的sendMessage()方法、post()方法等，而发出的消息经过一系列地辗转处理后，最终会传递到Handler的handleMessage()方法中。
+
+3. **MessageQueue**
+
+MessageQueue是消息队列的意思，它主要用于存放所有通过Handler发送的消息。这部分消息会一直存在于消息队列中，等待被处理。每个线程中只会有一个MessageQueue对象。
+
+4. **Looper**
+
+Looper是每个线程中的MessageQueue的管家，调用Looper的loop()方法后，就会进入一个无限循环当中，然后每当发现MessageQueue中存在一条消息时，就会将它取出，并传递到Handler的handleMessage()方法中。每个线程中只会有一个Looper对象。
+
+- 整个异步消息处理机制的流程如图10.3所示。![image-20240208114813167](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208114813167.png)
+
+
+
+###### 使用**AsyncTask**
+
+- 借助AsyncTask，即使你对异步消息处理机制完全不了解，也可以十分简单地从子线程切换到主线程。
+
+- AsyncTask的基本用法：由于AsyncTask是一个抽象类，所以如果我们想使用它，就必须创建一个子类去继承它。在继承时我们可以为AsyncTask类指定3个泛型参数，这3个参数的用途如下：
+
+  - Params。在执行AsyncTask时需要传入的参数，可用于在后台任务中使用。
+
+  - Progress。在后台任务执行时，如果需要在界面上显示当前的进度，则使用这里指定的泛型作为进度单位。
+
+  - Result。当任务执行完毕后，如果需要对结果进行返回，则使用这里指定的泛型作为返回值类型。
+
+    
+
+    因此，一个最简单的自定义AsyncTask就可以写成如下形式：![image-20240208115253519](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208115253519.png)
+
+![image-20240208115319624](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208115319624.png)
+
+- 我们还需要重写AsyncTask中的几个方法才能完成对任务的定制。经常需要重写的方法有以下4个。
+
+1. **onPreExecute()**
+
+这个方法会在后台任务开始执行之前调用，用于进行一些界面上的初
+
+始化操作，比如显示一个进度条对话框等。02. **doInBackground(Params...)**
+
+这个方法中的所有代码都会在子线程中运行，我们应该在这里去处理
+
+所有的耗时任务。任务一旦完成，就可以通过return语句将任务的执
+
+行结果返回，如果AsyncTask的第三个泛型参数指定的是Unit，就可
+
+以不返回任务执行结果。注意，在这个方法中是不可以进行UI操作
+
+的，如果需要更新UI元素，比如说反馈当前任务的执行进度，可以调
+
+用publishProgress (Progress...)方法来完成。
+
+3. **onProgressUpdate(Progress...)**
+
+当在后台任务中调用了publishProgress(Progress...)方法后，
+
+onProgressUpdate (Progress...)方法就会很快被调用，该方
+
+法中携带的参数就是在后台任务中传递过来的。在这个方法中可以对
+
+UI进行操作，利用参数中的数值就可以对界面元素进行相应的更新。
+
+4. **onPostExecute(Result)**
+
+当后台任务执行完毕并通过return语句进行返回时，这个方法就很快
+
+会被调用。返回的数据会作为参数传递到此方法中，可以利用返回的
+
+数据进行一些UI操作，比如说提醒任务执行的结果，以及关闭进度条
+
+对话框等。
+
+因此，一个比较完整的自定义AsyncTask就可以写成如下形式：![image-20240208115405455](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208115405455.png)
+
+![image-20240208115413141](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208115413141.png)
+
+- 简单来说，使用AsyncTask的诀窍就是，在doInBackground()方法中执行具体的耗时任务，在onProgressUpdate()方法中进行UI操作，在onPostExecute()方法中执行一些任务的收尾工作。
+
+  如果想要启动这个任务，只需编写以下代码即可![image-20240208115631750](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208115631750.png)
+
+
+
+
+
+##### **Service**的基本用法
+
+###### 定义一个**Service**
+
+- 新建一个ServiceTest项目，然后右击com.example.servicetest→New→Service→Service，会弹出如图10.4所示的窗口。![image-20240208115743446](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208115743446.png)
+
+将两个属性都勾中，点击“Finish”完成创建。
+
+现在观察MyService中的代码，如下所示：
+
+![image-20240208120034002](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208120034002.png)
+
+重写Service中的另外一些方法了，如下所示：![image-20240208120054497](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208120054497.png)
+
+这里我们又重写了onCreate()、onStartCommand()和onDestroy()这3个方法，它们是每个Service中最常用到的3个方法了。其中onCreate()方法会在Service创建的时候调用，onStartCommand()方法会在每次Service启动的时候调用，onDestroy()方法会在Service销毁的时候调用。
+
+
+
+- 每一个Service都需要在AndroidManifest.xml文件中进行注册才能生效。这是Android四大组件共有的特点。智能的Android Studio早已自动帮我们完成了。打开AndroidManifest.xml文件瞧一瞧，代码如下所示：![image-20240208120312158](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208120312158.png)
+
+
+
+###### 启动和停止**Service**
+
+- 启动和停止的方法主要是借助Intent来实现的。下面就让我们在ServiceTest项目中尝试启动以及停止MyService。
+
+  首先修改activity_main.xml中的代码，如下所示：![image-20240208120357718](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208120357718.png)
+
+这里我们在布局文件中加入了两个按钮，分别用于启动和停止Service。然后修改MainActivity中的代码，如下所示：
+
+![image-20240208120413947](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208120413947.png)
+
+
+
+###### **Activity**和**Service**进行通信
+
+- 例如在Activity中指挥Service去干什么，Service就去干什么。当然可以，这就需要借助我们刚刚忽略的onBind()方法了。
+- 比如说，目前我们希望在MyService里提供一个下载功能，然后在Activity中可以决定何时开始下载，以及随时查看下载进度。实现这个功能的思路是创建一个专门的Binder对象来对下载功能进行管理。修改MyService中的代码，如下所示：![image-20240208120849163](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208120849163.png)
+
+首先需要在布局文件里新增两个按钮，修改activity_main.xml中的代码，如下所示：![image-20240208120917032](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208120917032.png)
+
+​	这两个按钮分别是用于绑定和取消绑定Service的
+
+当一个Activity和Service绑定了之后，就可以调用该Service里的Binder提供的方法了。修改MainActivity中的代码，如下所示：
+
+![image-20240208121322836](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208121322836.png)
+
+![image-20240208121334361](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208121334361.png)
+
+
+
+##### **Service**的生命周期
+
+- 之前我们学习过了Activity以及Fragment的生命周期。类似地，Service也有自己的生命周期，前面我们使用到的onCreate()、onStartCommand()、onBind()和onDestroy()等方法都是在Service的生命周期内可能回调的方法
+
+  
+
+##### **Service**的更多技巧
+
+###### 使用前台**Service**.
+
+- 从Android 8.0系统开始，只有当应用保持在前台可见状态的情况下，Service才能保证稳定运行，一旦应用进入后台之后，Service随时都有可能被系统回收。而如果你希望Service能够一直保持运行状态，就可以考虑使用前台Service。
+- 前台Service和普通Service最大的区别就在于，它一直会有一个正在运行的图标在系统的状态栏显示，下拉状态栏后可以看到更加详细的信息，非常类似于通知的效果，如图10.11所示。![image-20240208121931154](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208121931154.png)
+
+
+
+- 如何才能创建一个前台Service吧，其实并不复杂，修改MyService中的代码，如下所示：
+
+![image-20240208122122485](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208122122485.png)
+
+
+
+从Android 9.0系统开始，使用前台Service必须在AndroidManifest.xml文件中进行权限声明才行，如下所示：![image-20240208122201753](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208122201753.png)
+
+现在重新运行一下程序，并点击“Start Service”按钮，MyService就会以前台Service的模式启动了，并且在系统状态栏会显示一个通知图标，下拉状态栏后可以看到该通知的详细内容，如图10.12所示
+
+![image-20240208122226360](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208122226360.png)
+
+
+
+###### 使用**IntentService**
+
+- Service中的代码都是默认运行在主线程当中的，如果直接在Service里处理一些耗时的逻辑，就很容易出现ANR（Application Not Responding）的情况。
+
+  所以这个时候就需要用到Android多线程编程的技术了，我们应该在Service的每个具体的方法里开启一个子线程，然后在这里处理那些耗时的逻辑。因此，一个比较标准的Service就可以写成如下形式：![image-20240208122427023](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208122427023.png)
+
+但是，这种Service一旦启动，就会一直处于运行状态，必须调用stopService()或stopSelf()方法，或者被系统回收，Service才会停止。所以，如果想要实现让一个Service在执行完毕后自动停止的功能，就可以这样写：![image-20240208122619001](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208122619001.png)
+
+![image-20240208122625871](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208122625871.png)
+
+
+
+- 为了可以简单地创建一个异步的、会自动停止的Service，Android专门提供了一个IntentService类，这个类就很好地解决了前面所提到的两种尴尬，下面我们就来看一下它的用法。
+
+  新建一个MyIntentService类继承自IntentService，代码如下所示：![image-20240208122808364](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208122808364.png)
+
+接下来修改activity_main.xml中的代码，加入一个用于启动MyIntentService的按钮，如下所示：![image-20240208122834971](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208122834971.png)
+
+![image-20240208122843703](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208122843703.png)
+
+然后修改MainActivity中的代码，如下所示：![image-20240208122854504](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208122854504.png)
+
+最后不要忘记，Service都是需要在AndroidManifest.xml里注册的，如下所示：![image-20240208122914329](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208122914329.png)
+
+![image-20240208122927836](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208122927836.png)
+
+
+
+
+
+#### **Kotlin**课堂：泛型的高级特性
+
+###### 对泛型进行实化
+
+- ![image-20240208123314692](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208123314692.png)
+
+可以看到，bar()是一个带有泛型类型的内联函数，foo()函数调用了bar()函数，在代码编译之后，bar()函数中的代码将可以获得泛型的实际类型。这就意味着，Kotlin中是可以将内联函数中的泛型进行实化的。
+
+- 首先，该函数必须是内联函数才行，也就是要用inline关键字来修饰该函数。其次，在声明泛型的地方必须加上reified关键字来表示该泛型要进行实化。示例代码如下：![image-20240208123427541](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208123427541.png)
+
+上述函数中的泛型T就是一个被实化的泛型，因为它满足了内联函数和reified关键字这两个前提条件。那么借助泛型实化，到底可以实现什么样的效果呢？从函数名就可以看出来了，这里我们准备实现一个获取泛型实际类型的功能，代码如下所示：![image-20240208123446522](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208123446522.png)
+
+虽然只有一行代码，但是这里却实现了一个Java中完全不可能实现的功能：getGenericType()函数直接返回了当前指定泛型的实际类型。T.class这样的语法在Java中是不合法的，而在Kotlin中，借助泛型实化功能就可以使用T::class.java这样的语法了。现在我们可以使用如下代码对getGenericType()函数进行测试：![image-20240208123534304](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208123534304.png)
+
+这里给getGenericType()函数指定了两种不同的泛型，由于getGenericType()函数会将指定泛型的具体类型返回，因此这里我们将返回的结果进行打印。现在运行一下main()函数，结果如图10.17所示。![image-20240208123600669](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208123600669.png)
+
+
+
+###### 泛型实化的应用
+
+- 除了ContentProvider之外，你会发现其余的3个组件有一个共同的特点，它们都是要结合Intent一起使用的。比如说启动一个Activity就可以这么写：![image-20240208123707164](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208123707164.png)
+
+如果在没有更好选择的情况下，这种写法也是可以忍受的，但是Kotlin的泛型实化功能使得我们拥有了更好的选择。新建一个reified.kt文件，然后在里面编写如下代码：
+
+![image-20240208123726397](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208123726397.png)
+
+现在，如果我们想要启动TestActivity，只需要这样写就可以了：![image-20240208123842608](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208123842608.png)
+
+不过，现在的startActivity()函数其实还是有问题的，因为通常在启用Activity的时候还可能会使用Intent附带一些参数，比如下面的写法：![image-20240208124046634](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208124046634.png)
+
+而经过刚才的封装之后，我们就无法进行传参了
+
+只需要借助之前在第6章学习的高阶函数就可以轻松搞定。回到reified.kt文件当中，这里添加一个新的startActivity()函数重载，如下所示：![image-20240208124111666](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208124111666.png)
+
+在创建完Intent的实例之后，随即调用该函数类型参数，并把Intent的实例传入，这样调用startActivity()函数的时候就可以在Lambda表达式中为Intent传递参数了，如下所示：![image-20240208124149902](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208124149902.png)
+
+
+
+
+
+###### 泛型的协变
+
+- 在开始学习协变和逆变之前，我们还得先了解一个约定。一个泛型类或者泛型接口中的方法，它的参数列表是接收数据的地方，因此可以称它为in位置，而它的返回值是输出数据的地方，因此可以称它为out位置，如图10.18所示。![image-20240208124244222](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208124244222.png)
+
+有了这个约定前提，我们就可以继续学习了。首先定义如下3个类：![image-20240208124301108](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208124301108.png)
+
+如果某个方法接收一个List<Person>类型的参数，而我们传入一个List<Student>的实例，这样合不合法呢？看上去好像也挺正确的，但是Java中是不允许这么做的，因为List<Student>不能成为List<Person>的子类，否则将可能存在类型转换的安全隐患。为什么会存在类型转换的安全隐患呢？下面我们通过一个具体的例子进行说明。这里自定义一个SimpleData类，代码如下所示：![image-20240208124435717](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208124435717.png)
+
+SimpleData是一个泛型类，它的内部封装了一个泛型data字段，调用set()方法可以给data字段赋值，调用get()方法可以获取data字段的值。接着我们假设，如果编程语言允许向某个接收SimpleData<Person>参数的方法传入SimpleData<Student>的实例，那么如下代码就会是合法的：![image-20240208124616709](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208124616709.png)
+
+![image-20240208124626144](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208124626144.png)
+
+回到main()方法当中，我们调用SimpleData<Student>的get()方法来获取它内部封装的Student数据，可现在SimpleData<Student>中实际包含的却是一个Teacher的实例，那么此时必然会产生类型转换异常。所以，为了杜绝这种安全隐患，Java是不允许使用这种方式来传递参数的。换句话说，即使Student是Person的子类，SimpleData<Student>并不是SimpleData<Person>的子类。不过，回顾一下刚才的代码，你会发现问题发生的主要原因是我们在handleSimpleData()方法中向SimpleData<Person>里设置了一个Teacher的实例。如果SimpleData在泛型T上是只读的话，肯定就没有类型转换的安全隐患了，那么这个时候SimpleData<Student>可不可以成为SimpleData<Person>的子类呢？
+
+- 讲到这里，我们终于要引出泛型协变的定义了。**假如定义了一个MyClass<T>的泛型类，其中A是B的子类型，同时MyClass<A>又是MyClass<B>的子类型，那么我们就可以称MyClass在T这个泛型上是协变的。**
+
+  但是如何才能让MyClass<A>成为MyClass<B>的子类型呢？如果一个泛型类在其泛型类型的数据上是只读的话，那么它是没有类型转换安全隐患的。而要实现这一点，则需要让MyClass<T>类中的所有方法都不能接收T类型的参数。换句话说，T只能出现在out位置上，而不能出现在in位置上。现在修改SimpleData类的代码，如下所示：![image-20240208124819531](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208124819531.png)
+
+经过了这样的修改之后，下面的代码就可以完美编译通过且没有任何安全隐患了：![image-20240208124844826](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208124844826.png)
+
+由于SimpleData类已经进行了协变声明，那么SimpleData<Student>自然就是SimpleData<Person>的子类了，所以这里可以安全地向handleMyData()方法中传递参数。然后在handleMyData()方法中去获取SimpleData封装的数据，虽然这里泛型声明的是Person类型，实际获得的会是一个Student的实例，但由于Person是Student的父类，向上转型是完全安全的，所以这段代码没有任何问题。
+
+
+
+###### 泛型的逆变
+
+- 定义：假如定义了一个MyClass<T>的泛型类，其中A是B的子类型，同时MyClass<B>又是MyClass<A>的子类型，那么我们就可以称MyClass在T这个泛型上是逆变的。协变和逆变的区别如图10.19所示。![image-20240208125000288](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208125000288.png)
+
+具体的例子：这里先定义一个Transformer接口，用于执行一些转换操作，代码如下所示：![image-20240208125026944](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208125026944.png)
+
+可以看到，Transformer接口中声明了一个transform()方法，它接收一个T类型的参数，并且返回一个String类型的数据，这意味着参数T在经过transform()方法的转换之后将会变成一个字符串。至于具体的转换逻辑是什么样的，则由子类去实现，Transformer接口对此并不关心。那么现在我们就尝试对Transformer接口进行实现，代码如下所示![image-20240208125055251](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208125055251.png)
+
+这段代码从安全的角度来分析是没有任何问题的，因为Student是Person的子类，使用Transformer<Person>的匿名类实现将Student对象转换成一个字符串也是绝对安全的，并不存在类型转换的安全隐患。但是实际上，在调用handleTransformer()方法的时候却会提示语法错误，原因也很简单，Transformer<Person>并不是Transformer<Student>的子类型。那么这个时候逆变就可以派上用场了，它就是专门用于处理这种情况的。修改Transformer接口中的代码，如下所示：
+
+![image-20240208125127256](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208125127256.png)
+
+![image-20240208125134634](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208125134634.png)
