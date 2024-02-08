@@ -1860,3 +1860,238 @@ SimpleData是一个泛型类，它的内部封装了一个泛型data字段，调
 ![image-20240208125127256](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208125127256.png)
 
 ![image-20240208125134634](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208125134634.png)
+
+
+
+
+
+#### 使用网络技术
+
+###### **WebView**的用法
+
+- Android提供了一个WebView控件，借助它我们就可以在自己的应用程序里嵌入一个浏览器，从而非常轻松地展示各种各样的网页。
+- WebView的用法也相当简单，下面我们就通过一个例子来学习一下吧。新建一个WebViewTest项目，然后修改activity_main.xml中的代码，如下所示：![image-20240208130627751](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208130627751.png)
+
+我们在布局文件中使用到了一个新的控件：WebView。这个控件就是用来显示网页的
+
+然后修改MainActivity中的代码，如下所示：![image-20240208130652260](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208130652260.png)
+
+![image-20240208130700387](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208130700387.png)
+
+通过WebView的getSettings()方法可以设置一些浏览器的属性，这里我们并没有设置过多的属性，只是调用了setJavaScriptEnabled()方法，让WebView支持JavaScript脚本。接下来是比较重要的一个部分，我们调用了WebView的setWebViewClient()方法，并传入了一个WebViewClient的实例。这段代码的作用是，当需要从一个网页跳转到另一个网页时，我们希望目标网页仍然在当前WebView中显示，而不是打开系统浏览器。最后一步就非常简单了，调用WebView的loadUrl()方法，并将网址传入，即可展示相应网页的内容，这里就让我们看一看百度的首页长什么样吧。![image-20240208131047687](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208131047687.png)
+
+我们还得修改AndroidManifest.xml文件，并加入权限声明，如下所示：![image-20240208131031068](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208131031068.png)
+
+
+
+##### 使用**HTTP**访问网络
+
+- 它的工作原理特别简单，就是客户端向服务器发出一条HTTP请求，服务器收到请求之后会返回一些数据给客户端，然后客户端再对这些数据进行解析和处理就可以了。
+
+
+
+###### 使用**HttpURLConnection**
+
+- 首先需要获取HttpURLConnection的实例，一般只需创建一个URL对象，并传入目标的网络地址，然后调用一下openConnection()方法即可，如下所示：![image-20240208131941784](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208131941784.png)
+
+在得到了HttpURLConnection的实例之后，我们可以设置一下HTTP请求所使用的方法。常用的方法主要有两个：GET和POST。GET表示希望从服务器那里获取数据，而POST则表示希望提交数据给服务器。写法如下：![image-20240208132007383](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208132007383.png)
+
+接下来就可以进行一些自由的定制了，比如设置连接超时、读取超时的毫秒数，以及服务器希望得到的一些消息头等。这部分内容根据自己的实际情况进行编写，示例写法如下：![image-20240208132030155](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208132030155.png)
+
+之后再调用getInputStream()方法就可以获取到服务器返回的输入流了，剩下的任务就是对输入流进行读取：![image-20240208132046864](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208132046864.png)
+
+最后可以调用disconnect()方法将这个HTTP连接关闭：![image-20240208132101536](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208132101536.png)
+
+
+
+- 下面就让我们通过一个具体的例子来真正体验一HttpURLConnection的用法。新建一个NetworkTest项目，首先修改activity_main.xml中的代码，如下所示：![image-20240208132945551](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208132945551.png)
+
+![image-20240208132954615](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208132954615.png)
+
+接着修改MainActivity中的代码，如下所示：![image-20240208133019843](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208133019843.png)
+
+![image-20240208133028560](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208133028560.png)
+
+我们在“Send Request”按钮的点击事件里调用了sendRequestWithHttpURLConnection()方法，在这个方法中先是开启了一个子线程，然后在子线程里使用HttpURLConnection发出一条HTTP请求，请求的目标地址就是百度的首页。接着利用BufferedReader对服务器返回的流进行读取，并将结果传入showResponse()方法中。而在showResponse()方法里，则是调用了一个runOnUiThread()方法，然后在这个方法的Lambda表达式中进行操作，将返回的数据显示到界面上。
+
+仍然别忘了要声明一下网络权限。修改AndroidManifest.xml中的代码，如下所示：![image-20240208133115725](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208133115725.png)
+
+![image-20240208133123546](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208133123546.png)
+
+现在运行一下程序，并点击“Send Request”按钮，结果如图11.2所示![image-20240208133147932](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208133147932.png)
+
+没错，服务器返回给我们的就是这种HTML代码，只是通常情况下浏览器会将这些代码解析成漂亮的网页后再展示出来。
+
+那么如果想要提交数据给服务器应该怎么办呢？其实也不复杂，只需要将HTTP请求的方法改成POST，并在获取输入流之前把要提交的数据写出即可。注意，每条数据都要以键值对的形式存在，数据与数据之间用“&”符号隔开。比如说我们想要向服务器提交用户名和密码，就可以这样写：![image-20240208133231411](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208133231411.png)
+
+
+
+
+
+###### 使用**OkHttp**
+
+- OkHttp的项目主页地址是：https://github.com/square/okhttp。
+- 在使用OkHttp之前，我们需要先在项目中添加OkHttp库的依赖。编辑app/build.gradle文件，在dependencies闭包中添加如下内容：![image-20240208141102135](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208141102135.png)
+
+- OkHttp的具体用法，首先需要创建一个OkHttpClient
+
+  的实例，如下所示：![image-20240208141126841](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208141126841.png)
+
+接下来如果想要发起一条HTTP请求，就需要创建一个Request对象：![image-20240208141137689](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208141137689.png)
+
+上述代码只是创建了一个空的Request对象，并没有什么实际作用，我们可以在最终的build()方法之前连缀很多其他方法来丰富这个Request对象。比如可以通过url()方法来设置目标的网络地址，如下所示：![image-20240208141206224](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208141206224.png)
+
+之后调用OkHttpClient的newCall()方法来创建一个Call对象，并调用它的execute()方法来发送请求并获取服务器返回的数据，写法如下：![image-20240208141223736](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208141223736.png)
+
+Response对象就是服务器返回的数据了，我们可以使用如下写法来得到返回的具体内容：![image-20240208141238780](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208141238780.png)
+
+如果是发起一条POST请求，会比GET请求稍微复杂一点，我们需要先构建一个Request Body对象来存放待提交的参数，如下所示：![image-20240208141253995](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208141253995.png)	![image-20240208141301915](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208141301915.png)
+
+然后在Request.Builder中调用一下post()方法，并将RequestBody对象传入：![image-20240208141319622](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208141319622.png)
+
+接下来的操作就和GET请求一样了，调用execute()方法来发送请求并获取服务器返回的数据即可。
+
+- 现在我们先把NetworkTest这个项目改用OkHttp的方式再实现一遍吧。
+
+  由于布局部分完全不用改动，所以直接修改MainActivity中的代码，如下所示：![image-20240208141457801](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208141457801.png)
+
+![image-20240208141504844](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208141504844.png)
+
+
+
+
+
+##### 解析**XML**格式数据
+
+- 在网络上传输数据时最常用的格式有两种：XML和JSON。
+- 搭建Web服务器的过程：下面来看Window系统下的搭建过程。首先你需要下载一个Apache服务器的安装包，官方下载地址是：http://httpd.apache.org。下载完成后双击就可以进行安装了，如图11.3所示。![image-20240208142741725](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208142741725.png)
+
+然后一直点击“Next”，会提示让你输入自己的域名，我们随便填一个域名就可以了，如图11.4所示。![image-20240208142807158](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208142807158.png)
+
+接着继续一直点击“Next”，会提示让你选择程序安装的路径，这里我选择安装到C:\Apache目录下。之后继续点击“Next”就可以完成安装了。安装成功后服务器会自动启动，你可以打开浏览器来验证一下。在地址栏输入127.0.0.1，如果出现了如图11.5所示的界面，就说明服务器已经启动成功了。![image-20240208142851379](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208142851379.png)
+
+接下来进入C:\Apache\htdocs目录下，在这里新建一个名为get_data.xml的文件，然后编辑这个文件，并加入如下XML格式的内容。![image-20240208142934119](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208142934119.png)
+
+![image-20240208142945068](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208142945068.png)
+
+这时在浏览器中访问http://127.0.0.1/get_data.xml这个网址，就应该出现如图11.6所示的内容。![image-20240208143010507](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208143010507.png)
+
+准备工作到此结束，接下来就让我们在Android程序里去获取并解析这段XML数据吧
+
+- 解析XML格式的数据其实也有挺多种方式的，本节中我们学习比较常用的两种：Pull解析和SAX解析。
+
+  
+
+###### **Pull**解析方式
+
+- 这里仍然是在NetworkTest项目的基础上继续开发
+
+  修改MainActivity中的代码，如下所示：![image-20240208143202240](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208143202240.png)
+
+![image-20240208143215746](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208143215746.png)
+
+为了能让程序使用HTTP，我们还要进行如下配置才可以。右击res目录→New→Directory，创建一个xml目录，接着右击xml目录→New→File，创建一个network_config.xml文件。然后修改network_config.xml文件中的内容，如下所示：![image-20240208143302818](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208143302818.png)
+
+这段配置文件的意思就是允许我们以明文的方式在网络上传输数据，而HTTP使用的就是明文传输方式。
+
+接下来修改AndroidManifest.xml中的代码来启用我们刚才创建的配置文件：![image-20240208143334747](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208143334747.png)
+
+这样就可以在程序中使用HTTP了
+
+
+
+###### **SAX**解析方式
+
+- 要使用SAX解析，通常情况下我们会新建一个类继承自DefaultHandler，并重写父类的5个方法，如下所示：![image-20240208143535676](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208143535676.png)
+
+- 下面就让我们尝试用SAX解析的方式来实现和上一小节同样的功能吧。新建一个ContentHandler类继承自DefaultHandler，并重写父类的5个方法，如下所示：![image-20240208143901779](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208143901779.png)
+
+![image-20240208143915883](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208143915883.png)
+
+接下来的工作就非常简单了，修改MainActivity中的代码，如下所示：![image-20240208144009279](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144009279.png)
+
+![image-20240208144023025](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144023025.png)
+
+现在重新运行一下程序，点击“Send Request”按钮后观察Logcat中的打印日志，你会看到和图11.7中一样的结果![image-20240208144144867](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144144867.png)
+
+
+
+##### 解析**JSON**格式数据
+
+- 比起XML，JSON的主要优势在于它的体积更小，在网络上传输的时候更省流量。但缺点在于，它的语义性较差，看起来不如XML直观。
+
+- 在开始之前，我们还需要在C:\Apache\htdocs目录中新建一个get_data.json的文件，然后编辑这个文件，并加入如下JSON格式的内容：![image-20240208144256401](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144256401.png)
+
+这时在浏览器中访问http://127.0.0.1/get_data.json这个网址，就应该出现如图11.8所示的内容![image-20240208144333007](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144333007.png)
+
+好了，这样我们就把JSON格式的数据准备好了，下面就开始学习如何在Android程序中解析这些数据吧。
+
+
+
+###### 使用**JSONObject**.
+
+- 修改MainActivity中的代码，如下所示：![image-20240208144436472](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144436472.png)
+
+![image-20240208144443760](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144443760.png)
+
+现在重新运行一下程序，并点击“SendRequest”按钮，结果如图11.9所示。![image-20240208144507634](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144507634.png)
+
+
+
+
+
+###### 使用**GSON**
+
+- 如果想要使用这个功能的话，就必须在项目中添加GSON库的依赖。编辑app/build.gradle文件，在dependencies闭包中添加如下内容：![image-20240208144705893](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144705893.png)
+
+![image-20240208144715740](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144715740.png)
+
+- 它的强大之处就在于可以将一段JSON格式的字符串自动映射成一个对象，从而不需要我们再手动编写代码进行解析了。比如说一段JSON格式的数据如下所示：![image-20240208144748253](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144748253.png)
+
+那我们就可以定义一个Person类，并加入name和age这两个字段，然后只需简单地调用如下代码就可以将JSON数据自动解析成一个Person对象了：![image-20240208144813512](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144813512.png)
+
+如果需要解析的是一段JSON数组，会稍微麻烦一点，比如如下格式的数据：![image-20240208144826778](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144826778.png)
+
+这个时候，我们需要借助TypeToken将期望解析成的数据类型传入fromJson()方法中，如下所示：![image-20240208144843213](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208144843213.png)
+
+
+
+- 下面就让我们来真正地尝试一下吧。首先新增一个App类，并加入id、name和version这3个字段，如下所示：![image-20240208145218694](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208145218694.png)
+
+然后修改MainActivity中的代码，如下所示：![image-20240208145228269](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208145228269.png)
+
+![image-20240208145234957](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208145234957.png)
+
+现在重新运行程序，点击“Send Request”按钮后观察Logcat中的打印日志，你会看到和图11.9中一样的结果。
+
+
+
+##### 网络请求回调的实现方式
+
+- 通常情况下我们应该将这些通用的网络操作提取到一个公共的类里，并提供一个通用方法，当想要发起网络请求的时候，只需简单地调用一下这个方法即可。比如使用如下的写法：![image-20240208145701510](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208145701510.png)
+
+以后每当需要发起一条HTTP请求的时候，就可以这样写：![image-20240208145717753](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208145717753.png)
+
+在获取到服务器响应的数据后，我们就可以对它进行解析和处理了。但是需要注意，网络请求通常属于耗时操作，而sendHttpRequest()方法的内部并没有开启线程，这样就有可能导致在调用sendHttpRequest()方法的时候主线程被阻塞。
+
+那么在遇到这种情况时应该怎么办呢？其实解决方法并不难，只需要使用编程语言的回调机制就可以了。下面就让我们来学习一下回调机制到底是如何使用的。
+
+首先需要定义一个接口，比如将它命名成HttpCallbackListener，代码如下所示：![image-20240208145855036](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208145855036.png)
+
+可以看到，我们在接口中定义了两个方法：onFinish()方法表示当服务器成功响应我们请求的时候调用，onError()表示当进行网络操作出现错误的时候调用
+
+接着修改HttpUtil中的代码，如下所示：![image-20240208145926972](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208145926972.png)
+
+![image-20240208145938320](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208145938320.png)
+
+现在sendHttpRequest()方法接收两个参数，因此我们在调用它的时候还需要将HttpCallbackListener的实例传入，如下所示：	![image-20240208150038990](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208150038990.png)
+
+![image-20240208150046343](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208150046343.png)
+
+
+
+不过你会发现，上述使用HttpURLConnection的写法总体来说还是比较复杂的，那么使用OkHttp会变得简单吗？答案是肯定的，而且要简单得多，下面我们来具体看一下。在HttpUtil中加入一个sendOkHttpRequest()方法，如下所示：![image-20240208150120262](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208150120262.png)
+
+OkHttp在enqueue()方法的内部已经帮我们开好子线程了，然后会在子线程中执行HTTP请求，并将最终的请求结果回调到okhttp3.Callback当中。那么我们在调用sendOkHttpRequest()方法的时候就可以这样写：![image-20240208150226208](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208150226208.png)
+
+![image-20240208150233102](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208150233102.png)
