@@ -2095,3 +2095,627 @@ Response对象就是服务器返回的数据了，我们可以使用如下写法
 OkHttp在enqueue()方法的内部已经帮我们开好子线程了，然后会在子线程中执行HTTP请求，并将最终的请求结果回调到okhttp3.Callback当中。那么我们在调用sendOkHttpRequest()方法的时候就可以这样写：![image-20240208150226208](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208150226208.png)
 
 ![image-20240208150233102](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208150233102.png)
+
+
+
+
+
+##### 最好用的网络库：**Retrofit**
+
+- Retrofit的项目主页地址是：https://github.com/square/retrofit。
+
+
+
+###### **Retrofit**的基本用法
+
+- 要想使用Retrofit，我们需要先在项目中添加必要的依赖库。编辑app/build.gradle文件，在dependencies闭包中添加如下内容：![image-20240208191704414](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240208191704414.png)
+
+由于Retrofit是基于OkHttp开发的，因此添加上述第一条依赖会自动将Retrofit、OkHttp和Okio这几个库一起下载，我们无须再手动引入OkHttp库。另外，Retrofit还会将服务器返回的JSON数据自动解析成对象，因此上述第二条依赖就是一个Retrofit的转换库，它是借助GSON来解析JSON数据的，所以会自动将GSON库一起下载下来，这样我们也不用手动引入GSON库了。
+
+由于Retrofit会借助GSON将JSON数据转换成对象，因此这里同样需要新增一个App类，并加入id、name和version这3个字段，如下所示：
+
+![image-20240210131731545](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210131731545.png)
+
+新建AppService接口，代码如下所示：![image-20240210131803836](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210131803836.png)
+
+修改activity_main.xml中的代码，如下所示：![image-20240210131831404](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210131831404.png)
+
+![image-20240210131837754](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210131837754.png)
+
+修改MainActivity中的代码，如下所示：![image-20240210131856495](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210131856495.png)
+
+接下来就可以进行一下测试了，不过由于这里使用的服务器接口仍然是HTTP，因此我们还要按照11.3.1小节所示的步骤来进行网络安全配置才行。先从NetworkTest项目中复制network_config.xml文件到RetrofitTest项目当中，然后修改AndroidManifest.xml中的代码，如下所示
+
+![image-20240210131926447](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210131926447.png)
+
+![image-20240210131934229](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210131934229.png)
+
+
+
+###### 处理复杂的接口地址类型
+
+- 为了方便举例，这里先定义一个Data类，并包含id和content这两个字段，如下所示：![image-20240210132015802](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132015802.png)
+
+然后我们先从最简单的看起，比如服务器的接口地址如下所示：![image-20240210132031280](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132031280.png)
+
+这是最简单的一种情况，接口地址是静态的，永远不会改变。那么对应到Retrofit当中，使用如下的写法即可：![image-20240210132052307](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132052307.png)
+
+- 在很多场景下，接口地址中的部分内容可能会是动态变化的，比如如下的接口地址：![image-20240210132126384](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132126384.png)
+
+接口地址对应到Retrofit当中，如下所示：![image-20240210132211504](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132211504.png)
+
+另外，很多服务器接口还会要求我们传入一系列的参数，格式如下：![image-20240210132237919](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132237919.png)
+
+Retrofit针对这种带参数的GET请求，专门提供了一种语法支持：![image-20240210132315522](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132315522.png)
+
+
+
+###### **Retrofit**构建器的最佳写法
+
+- 是获取Service接口的动态代理对象实在是太麻烦了。先回顾一下之前的写法吧，大致代码如下所示：![image-20240210132439771](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132439771.png)
+
+- 我们可以将通用的这部分功能封装起来，从而简化获取Service接口动态代理对象的过程。新建一个ServiceCreator单例类，代码如下所示：![image-20240210132515779](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132515779.png)
+
+经过这样的封装之后，Retrofit的用法将会变得异常简单，比如我们想获取一个AppService接口的动态代理对象，只需要使用如下写法即可：![image-20240210132549886](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132549886.png)
+
+利用泛型实化功能，修改ServiceCreator中的代码，如下所示：![image-20240210132656796](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132656796.png)
+
+那么现在我们就又有了一种新的方式来获取AppService接口的动态代理对象，如下所示：![image-20240210132717712](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132717712.png)
+
+
+
+
+
+#### **Kotlin**课堂：使用协程编写高效的并发程序
+
+###### 协程的基本用法
+
+- 需要先在app/build.gradle文件当中添加如下依赖库：![image-20240210132908936](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132908936.png)
+
+接下来创建一个CoroutinesTest.kt文件，并定义一个main()函数，然后开始我们的协程之旅吧
+
+- 如何开启一个协程？最简单的方式就是使用Global.launch函数，如下所示：![image-20240210132947721](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210132947721.png)
+
+Global.launch函数每次创建的都是一个顶层协程，这种协程当应用程序运行结束时也会跟着一起结束。日志无法打印出来，要解决这个问题也很简单，我们让程序延迟一段时间再结束就行了，如下所示：![image-20240210133046460](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210133046460.png)
+
+那么有没有什么办法能让应用程序在协程中所有代码都运行完了之后再结束呢？当然也是有的，借助runBlocking函数就可以实现这个功能：![image-20240210133201585](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210133201585.png)
+
+那么如何才能创建多个协程呢？很简单，使用launch函数就可以了，如下所示：![image-20240210133215802](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240210133215802.png)
+
+
+
+###### 使用协程简化回调的写法
+
+- suspendCoroutine函数必须在协程作用域或挂起函数中才能调用，它接收一个Lambda表达式参数，主要作用是将当前协程立即挂起，然后在一个普通的线程中执行Lambda表达式中的代码。Lambda表达式的参数列表上会传入一个Continuation参数，调用它的resume()方法或resumeWithException()可以让协程恢复执行。
+- 了解了suspendCoroutine函数的作用之后，接下来我们就可以借助这个函数来对传统的回调写法进行优化。首先定义一个request()函数，代码如下所示：![image-20240212121449452](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212121449452.png)
+
+不管之后我们要发起多少次网络请求，都不需要再重复进行回调实现了。比如说获取百度首页的响应数据，就可以这样写：![image-20240212121531472](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212121531472.png)
+
+事实上，suspendCoroutine函数几乎可以用于简化任何回调的写法，比如之前使用Retrofit来发起网络请求需要这样写：![image-20240212121817182](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212121817182.png)
+
+定义一个await()函数，代码如下所示：![image-20240212121846943](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212121846943.png)
+
+有了await()函数之后，我们调用所有Retrofit的Service接口都会变得极其简单，比如刚才同样的功能就可以使用如下写法进行实现：![image-20240212121912158](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212121912158.png)
+
+![image-20240212121919027](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212121919027.png)
+
+
+
+#### **Material Design**
+
+###### **Toolbar**
+
+- 修改activity_main.xml中的代码，如下所示：![image-20240212122531678](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212122531678.png)
+
+接下来我们修改MainActivity，代码如下所示：![image-20240212122718425](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212122718425.png)
+
+现在运行一下程序，效果如图12.3所示。![image-20240212122734783](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212122734783.png)
+
+- Toolbar比较常用的功能：
+
+  比如修改标题栏上显示的文字内容。这段文字内容是在AndroidManifest.xml中指定的，如下所示：![image-20240212122829856](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212122829856.png)
+
+这里给activity增加了一个android:label属性，用于指定在Toolbar中显示的文字内容，如果没有指定的话，会默认使用application中指定的label内容，也就是我们的应用名称。
+
+不过只有一个标题的Toolbar看起来太单调了，我们还可以再添加一些action按钮来让Toolbar更加丰富一些。这里我提前准备了几张图片作为按钮的图标，将它们放在了drawable-xxhdpi目录下。现在右击res目录→New→Directory，创建一个menu文件夹。然后右击menu文件夹→New→Menu resource file，创建一个toolbar.xml文件，并编写如下代码：![image-20240212123108208](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212123108208.png)
+
+![image-20240212123115409](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212123115409.png)
+
+修改MainActivity中的代码，如下所示：![image-20240212123146312](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212123146312.png)
+
+现在重新运行一下程序，效果如图12.4所示。![image-20240212123305453](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212123305453.png)
+
+
+
+##### 滑动菜单
+
+###### **DrawerLayout**
+
+- 首先它是一个布局，在布局中允许放入两个直接子控件：第一个子控件是主屏幕中显示的内容，第二个子控件是滑动菜单中显示的内容。因此，我们就可以对activity_main.xml中的代码做如下修改：![image-20240212123546029](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212123546029.png)
+
+![image-20240212123554766](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212123554766.png)
+
+layout_gravity这个属性是必须指定的，因为我们需要告诉DrawerLayout滑动菜单是在屏幕的左边还是右边，指定left表示滑动菜单在左边，指定right表示滑动菜单在右边。这里我指定了start，表示会根据系统语言进行判断，如果系统语言是从左往右的，比如英语、汉语，滑动菜单就在左边，如果系统语言是从右往左的，比如阿拉伯语，滑动菜单就在右边。
+
+
+
+Toolbar的最左边加入一个导航按钮，点击按钮也会将滑动菜单的内容展示出来。这样就相当于给用户提供了两种打开滑动菜单的方式。首先我准备了一张导航按钮的图标ic_menu.png，将它放在了drawable-xxhdpi目录下。然后修改MainActivity中的代码，如下所示：![image-20240212124100479](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212124100479.png)
+
+![image-20240212124155704](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212124155704.png)
+
+
+
+###### **NavigationView**
+
+- 打开app/build.gradle文件，在dependencies闭包中添
+  加如下内容：![image-20240212124301067](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240212124301067.png)
+
+开始使用NavigationView之前，我们还需要准备好两个东西：menu和headerLayout。menu是用来在NavigationView中显示具体的菜单项的，headerLayout则是用来在NavigationView中显示头部布局的。
+
+右击menu文件夹→New→Menu resourcefile，创建一个nav_menu.xml文件，并编写如下代码：![image-20240216125021365](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216125021365.png)
+
+接下来应该准备headerLayout了，我们就在headerLayout中放置头像、用户名、邮箱地址这3项内容吧。右击layout文件夹→New→Layout resource file，创建一个nav_header.xml文件。修改其中的代码，如下所示：![image-20240216125128739](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216125128739.png)
+
+我们终于可以使用NavigationView了。修改activity_main.xml中的代码，如下所示：![image-20240216125219759](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216125219759.png)
+
+修改MainActivity中的代码，如下所示：![image-20240216125330148](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216125330148.png)
+
+![image-20240216125339069](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216125339069.png)
+
+现在可以重新运行一下程序了，点击一下Toolbar左侧的导航按钮，效果如图12.8所示![image-20240216125408323](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216125408323.png)
+
+
+
+##### 悬浮按钮和可交互提示
+
+###### **FloatingActionButton**
+
+- 首先仍然需要提前准备好一个图标，这里我放置了一张ic_done.png到drawable-xxhdpi目录下。然后修改activity_main.xml中的代码，如下所示：![image-20240216125524366](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216125524366.png)
+
+![image-20240216125537380](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216125537380.png)
+
+现在我们就可以运行一下了，效果如图12.9所示
+
+![image-20240216125608537](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216125608537.png)
+
+其实我们还可以指定FloatingActionButton的悬浮高度，如下所示：![image-20240216125649220](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216125649220.png)
+
+app:elevation属性给FloatingActionButton指定一个高度值。它和普通的Button其实没什么两样，都是调用setOnClickListener()方法来设置按钮的点击事件
+
+
+
+###### **Snackbar**
+
+- Snackbar的用法也非常简单，它和Toast是基本相似的，只不过可以额外增加一个按钮的点击事件。修改MainActivity中的代码，如下所示：![image-20240216125929552](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216125929552.png)
+
+重新运行一下程序，并点击悬浮按钮，效果如图12.11所示![image-20240216130021956](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216130021956.png)
+
+Snackbar从屏幕底部出现了，上面有我们设置的提示文字，还有一个“Undo”按钮，按钮是可以点击的。过一段时间后，Snackbar会自动从屏幕底部消失。
+
+这个Snackbar竟然将我们的悬浮按钮给遮挡住了。虽说也不是什么重大的问题，因为Snackbar过一会儿就会自动消失，但这种用户体验总归是不友好的。有没有什么办法能解决一下呢？当然有了，只需要借助CoordinatorLayout就可以轻松解决。
+
+
+
+###### **CoordinatorLayout**
+
+- CoordinatorLayout可以监听其所有子控件的各种事件，并自动
+  帮助我们做出最为合理的响应。举个简单的例子，刚才弹出的Snackbar提示将悬浮按钮遮挡住了，而如果我们能让CoordinatorLayout监听到Snackbar的弹出事件，那么它会自动将内部的FloatingActionButton向上偏移，从而确保不会被Snackbar遮挡。
+- 至于CoordinatorLayout的使用也非常简单，我们只需要将原来的FrameLayout替换一下就可以了。修改activity_main.xml中的代码，如下所示：![image-20240216130258453](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216130258453.png)
+
+![image-20240216130310211](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216130310211.png)
+
+现在重新运行一下程序，并点击悬浮按钮，效果如图12.12所示。![image-20240216130409355](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216130409355.png)
+
+
+
+
+
+##### 卡片式布局
+
+###### **MaterialCardView**
+
+- ![image-20240216130727831](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216130727831.png)
+
+这里定义了一个MaterialCardView布局，我们可以通过app:cardCornerRadius属性指定卡片圆角的弧度，数值越大，圆角的弧度也越大。另外，还可以通过app:elevation属性指定卡片的高度：高度值越大，投影范围也越大，但是投影效果越淡；高度值越小，投影范围也越小，但是投影效果越浓。
+
+由于我们还需要用到RecyclerView，因此必须在app/build.gradle文件中声明库的依赖：![image-20240216130905629](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216130905629.png)
+
+接下来开始具体的代码实现，修改activity_main.xml中的代码，如下所示：![image-20240216130918942](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216130918942.png)
+
+![image-20240216130928881](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216130928881.png)
+
+接着定义一个实体类Fruit，代码如下所示：![image-20240216130942997](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216130942997.png)
+
+然后需要为RecyclerView的子项指定一个我们自定义的布局，在layout目录下新建fruit_item.xml，代码如下所示![image-20240216130956466](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216130956466.png)
+
+![image-20240216131002974](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131002974.png)
+
+接下来需要为RecyclerView准备一个适配器，新建FruitAdapter类，让这个适配器继承自RecyclerView.Adapter，并将泛型指定为FruitAdapter.ViewHolder，代码如下所示：![image-20240216131030560](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131030560.png)
+
+上述代码相信你一定很熟悉，和我们在第4章中编写的FruitAdapter基本一模一样。唯一需要注意的是，在onBindViewHolder()方法中我们使用了Glide来加载水果图片
+
+最后修改MainActivity中的代码，如下所示：![image-20240216131107389](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131107389.png)
+
+现在重新运行一下程序，效果如图12.13所![image-20240216131139465](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131139465.png)
+
+
+
+###### **AppBarLayout**
+
+- AppBarLayout实际上是一个垂直方向的LinearLayout，它在内部做了很多滚动事件的封装，并应用了一些Material Design的设计理念。
+
+- 修改activity_main.xml中的代码，如下所示：![image-20240216131250173](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131250173.png)
+
+![image-20240216131300444](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131300444.png)
+
+现在重新运行一下程序，你就会发现一切都正常了，如图12.14所示。![image-20240216131322692](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131322692.png)
+
+当AppBarLayout接收到滚动事件的时候，它内部的子控件其实是可以指定如何去响应这些事件的，通过app:layout_scrollFlags属性就能实现。修改activity_main.xml中的代码，如下所示：![image-20240216131429397](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131429397.png)
+
+这里在Toolbar中添加了一个app:layout_scrollFlags属性，并将这个属性的值指定成了scroll|enterAlways|snap。其中，scroll表示当RecyclerView向上滚动的时候，Toolbar会跟着一起向上滚动并实现隐藏；enterAlways表示当RecyclerView向下滚动的时候，Toolbar会跟着一起向下滚动并重新显示；snap表示当Toolbar还没有完全隐藏或显示的时候，会根据当前滚动的距离，自动选择是隐藏还是显示。
+
+现在重新运行一下程序，并向上滚动RecyclerView，效果如图12.15所示。![image-20240216131521211](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131521211.png)
+
+
+
+##### 下拉刷新
+
+- SwipeRefreshLayout就是用于实现下拉刷新功能的核心类，我们把想要实现下拉刷新功能的控件放置到SwipeRefreshLayout中，就可以迅速让这个控件支持下拉刷新。那么在MaterialTest项目中，应该支持下拉刷新功能的控件自然就是RecyclerView了。
+- 使用SwipeRefreshLayout之前首先需要在app/build.gradle文件中添加如下依赖：![image-20240216131620762](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131620762.png)
+
+修改activity_main.xml中的代码，如下所示：![image-20240216131713851](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131713851.png)
+
+![image-20240216131725010](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131725010.png)
+
+由于RecyclerView现在变成了SwipeRefreshLayout的子控件，因此之前使用app:layout_behavior声明的布局行为现在也要移到SwipeRefreshLayout中才行。
+
+不过这还没有结束，虽然RecyclerView已经支持下拉刷新功能了，但是我们还要在代码中处理具体的刷新逻辑才行。修改MainActivity中的代码，如下所示![image-20240216131852633](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131852633.png)
+
+![image-20240216131900831](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216131900831.png)
+
+通常情况下，当触发了下拉刷新事件，应该是去网络上请求最新的数据，然后再将这些数据展示出来。这里简单起见，我们就不和网络进行交互了，而是调用一个refreshFruits()方法进行本地刷新操作。refreshFruits()方法中先是开启了一个线程，然后将线程沉睡两秒钟。之所以这么做，是因为本地刷新操作速度非常快，如果不将线程沉睡的话，刷新立刻就结束了，从而看不到刷新的过程。沉睡结束之后，这里使用了runOnUiThread()方法将线程切换回主线程，然后调用initFruits()方法重新生成数据，接着再调用FruitAdapter的notifyDataSetChanged()方法通知数据发生了变化，最后调用SwipeRefreshLayout的setRefreshing()方法并传入false，表示刷新事件结束，并隐藏刷新进度条。
+
+现在可以重新运行一下程序了，在屏幕的主界面向下拖动，会有一个下拉刷新的进度条出现，松手后就会自动进行刷新了，效果如图12.16所示。![image-20240216132116441](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132116441.png)
+
+
+
+##### 可折叠式标题栏
+
+###### **CollapsingToolbarLayout**
+
+- CollapsingToolbarLayout是不能独立存在的，它在设计的时候就
+  被限定只能作为AppBarLayout的直接子布局来使用。AppBarLayout
+  又必须是CoordinatorLayout的子布局
+- 首先我们需要一个额外的Activity作为水果的详情展示界面，右击com.example.materialtest包→New→Activity→Empty Activity，创建一个FruitActivity，并将布局名指定成activity_fruit.xml，然后我们开始编写水果详情展示界面的布局。
+- 首先实现标题栏部分，这里使用CoordinatorLayout作为最外层布局，如下所示：![image-20240216132529382](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132529382.png)
+
+![image-20240216132537823](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132537823.png)
+
+接着我们在CoordinatorLayout中嵌套一个AppBarLayout，如下所示：![image-20240216132554333](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132554333.png)
+
+接下来我们在AppBarLayout中再嵌套一个CollapsingToolbarLayout，如下所示：![image-20240216132608887](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132608887.png)
+
+![image-20240216132616551](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132616551.png)
+
+接下来，我们在CollapsingToolbarLayout中定义标题栏的具体内容，如下所示：![image-20240216132635777](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132635777.png)
+
+![image-20240216132653487](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132653487.png)
+
+下面开始编写水果内容详情部分。继续修改activity_fruit.xml中的代码，如下所示：![image-20240216132714220](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132714220.png)
+
+![image-20240216132721329](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132721329.png)
+
+不管是ScrollView还是NestedScrollView，它们的内部都只允许存在一个直接子布局。因此，如果我们想要在里面放入很多东西的话，通常会先嵌套一个LinearLayout，然后再在LinearLayout中放入具体的内容就可以了，如下所示：![image-20240216132813473](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132813473.png)
+
+![image-20240216132822929](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132822929.png)
+
+接下来在LinearLayout中放入具体的内容，这里我准备使用一个TextView来显示水果的内容详情，并将TextView放在一个卡片式布局当中，如下所示：![image-20240216132856216](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132856216.png)
+
+![image-20240216132909463](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132909463.png)
+
+为了做出示范，我就准备在activity_fruit.xml中加入一个悬浮按钮了。这个界面是一个水果详情展示界面，那么我就加入一个表示评论作用的悬浮按钮吧。首先需要提前准备好一个图标，这里我放置了一张ic_comment.png到drawable-xxhdpi目录下。然后修改activity_fruit.xml中的代码，如下所示：![image-20240216132947646](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132947646.png)
+
+![image-20240216132956720](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216132956720.png)
+
+接下来我们开始编写功能逻辑，修改FruitActivity中的代码，如下所示：![image-20240216133048163](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216133048163.png)
+
+![image-20240216133055597](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216133055597.png)
+
+其实还差最关键的一步，就是处理RecyclerView的点击事件，不然的话，我们根本就无法打开FruitActivity。修改FruitAdapter中的代码，如下所示：![image-20240216133146192](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216133146192.png)
+
+![image-20240216133154178](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216133154178.png)
+
+见证奇迹的时刻到了，现在重新运行一下程序，并点击界面上的任意一个水果，比如我点击了葡萄，效果如图12.17所示。![image-20240216133227077](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216133227077.png)
+
+我们尝试向上拖动水果内容详情，你会发现水果背景图上的标题会慢慢缩小，并且背景图会产生一些错位偏移的效果，如图12.18所示。![image-20240216133335606](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216133335606.png)
+
+继续向上拖动，直到标题栏变成完全折叠状态，效果如图12.19所示。![image-20240216133443071](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216133443071.png)
+
+可以看到，标题栏的背景图片不见了，悬浮按钮也自动消失了，现在水果标题栏变成了一个最普通的Toolbar。这是由于用户正在阅读具体的内容，我们需要给他们提供最充分的阅读空间。而如果这个时候向下拖动水果内容详情，就会执行一个完全相反的动画过程，最终恢复成图12.17的界面效果。
+
+
+
+###### 充分利用系统状态栏空间
+
+- 想要让背景图能够和系统状态栏融合，需要借助android:fitsSystemWindows这个属性来实现。在CoordinatorLayout、AppBarLayout、CollapsingToolbarLayout这种嵌套结构的布局中，将控件的android:fitsSystemWindows属性指定成true，就表示该控件会出现在系统状态栏里。对应到我们的程序，那就是水果标题栏中的ImageView应该设置这个属性了。不过只给ImageView设置这个属性是没有用的，我们必须将ImageView布局结构中的所有父布局都设置上这个属性才可以，修改activity_fruit.xml中的代码，如下所示：![image-20240216133730387](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216133730387.png)
+
+![image-20240216133741616](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216133741616.png)
+
+即使我们将android:fitsSystemWindows属性都设置好了也没有用，因为还必须在程序的主题中将状态栏颜色指定成透明色才行。指定成透明色的方法很简单，在主题中将android:statusBarColor属性的值指定成@android:color/transparent就可以了。打开res/values/styles.xml文件，对主题的内容进行修改，如下所示：![image-20240216133858618](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216133858618.png)
+
+![image-20240216133907224](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216133907224.png)
+
+还需要让FruitActivity使用这个主题才可以，修改AndroidManifest.xml中的代码，如下所示：![image-20240216133928889](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216133928889.png)
+
+现在重新运行MaterialTest程序，水果详情展示界面的效果就会如图12.20所示。![image-20240216133946988](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216133946988.png)
+
+
+
+#### **Kotlin**课堂：编写好用的工具方法
+
+###### 求**N**个数的最大最小值
+
+- 我们之前在第7章的Kotlin课堂中学过vararg关键字，它允许
+  方法接收任意多个同等类型的参数，正好满足我们这里的需求。那么我们就可以新建一个Max.kt文件，并在其中自定义一个max()函数，如下所示：![image-20240216134334542](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216134334542.png)
+
+这里max()函数的参数声明中使用了vararg关键字，也就是说现在它可以接收任意多个整型参数。接着我们使用了一个maxNum变量来记录所有数的最大值，并在一开始将它赋值成了整型范围的最小值。然后使用for-in循环遍历nums参数列表，如果发现当前遍历的数字比maxNum更大，就将maxNum的值更新成这个数，最终将maxNum返回即可。
+
+现在就可以使用如下的写法来实现：![image-20240216134445921](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216134445921.png)
+
+- Java中规定，所有类型的数字都是可比较的，因此必须实现Comparable接口，这个规则在Kotlin中也同样成立。那么我们就可以借助泛型，将max()函数修改成接收任意多个实现Comparable接口的参数，代码如下所示：![image-20240216134538203](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216134538203.png)
+
+经过这样的修改之后，我们就可以更加灵活地使用max()函数了，比如说求3个浮点型数字的最大值，同样也变得轻而易举：![image-20240216134603744](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216134603744.png)
+
+
+
+###### 简化**Toast**的用法
+
+- 首先回顾一下Toast的标准用法吧，如果想要在界面上弹出一段文字提示需要这样写：![image-20240216134722351](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216134722351.png)
+
+- 我们可以给String类和Int类各添加一个扩展函数，并在里面封装弹出Toast的具体逻辑。这样以后每次想要弹出Toast提示时，只需要调用它们的扩展函数就可以了。
+
+  新建一个Toast.kt文件，并在其中编写如下代码：![image-20240216134807929](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216134807929.png)
+
+那么经过这样的扩展之后，我们以后在使用Toast时可以变得多么简单呢？体验一下就知道了，比如同样弹出一段文字提醒就可以这么写：![image-20240216134847657](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216134847657.png)
+
+如果你想弹出一个定义在strings.xml中的字符串资源，也非常简单，写法如下：![image-20240216134908299](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216134908299.png)
+
+
+
+我们在第2章学习Kotlin基础语法的时候，曾经学过给函数设定参数默认值的功能。只要借助这个功能，我们就可以在不增加showToast()函数使用复杂度的情况下，又让它可以支持动态指定显示时长了。修改Toast.kt中的代码，如下所示：![image-20240216134944365](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216134944365.png)
+
+我们给showToast()函数增加了一个显示时长参数，但同时也给它指定了一个参数默认值。这样我们之前所使用的showToast()函数的写法将完全不受影响，默认会使用Toast.LENGTH_SHORT类型的显示时长。而如果你想要使用Toast.LENGTH_LONG的显示时长，只需要这样写就可以了：![image-20240216135050789](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216135050789.png)
+
+
+
+###### 简化**Snackbar**的用法
+
+- 先来回顾一下Snackbar的常规用法吧，如下所示：![image-20240216135108904](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216135108904.png)
+
+- 由于make()方法接收一个View参数，Snackbar会使用这个View自动查找最外层的布局，用于展示Snackbar。因此，我们就可以给View类添加一个扩展函数，并在里面封装显示Snackbar的具体逻辑。新建一个Snackbar.kt文件，并编写如下代码：![image-20240216135243374](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216135243374.png)
+
+![image-20240216135250178](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216135250178.png)
+
+现在想要使用Snackbar显示一段文本提示，只需要这样写就可以了：![image-20240216135316942](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216135316942.png)
+
+我们可以让showSnackbar()函数再额外接收一个函数类型参数，以此来实现Snackbar的完整功能支持。修改Snackbar.kt中的代码，如下所示：![image-20240216135350998](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216135350998.png)
+
+![image-20240216135358516](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216135358516.png)
+
+这样showSnackbar()函数就拥有比较完整的Snackbar功能了，比如本小节最开始的那段示例代码，现在就可以使用如下写法进行实现：![image-20240216135425123](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216135425123.png)
+
+
+
+
+
+#### **Jetpack**
+
+- 简介![image-20240216184740524](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216184740524.png)
+
+新建一个JetpackTest工程，然后开启我们的Jetpack探索之旅吧
+
+
+
+##### **ViewModel**
+
+- ViewModel的一个重要作用就是可以帮助Activity分担一部分工作，它是专门用于存放与界面相关的数据的。
+- 当手机发生横竖屏旋转的时候，Activity会被重新创建，同时存放在Activity中的数据也会丢失。而ViewModel的生命周期和Activity不同，它可以保证在手机屏幕发生旋转的时候不会被重新创建，只有当Activity退出的时候才会跟着Activity一起销毁。因此，将与界面相关的变量存放在ViewModel当中，这样即使旋转手机屏幕，界面上显示的数据也不会丢失。ViewModel的生命周期如图13.2所示。![image-20240216185022231](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185022231.png)
+
+
+
+###### **ViewModel**的基本用法
+
+- 需要在app/build.gradle文件中添加如下依赖：![image-20240216185050058](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185050058.png)
+
+- 比较好的编程规范是给每一个Activity和Fragment都创建一个对应的ViewModel，因此这里我们就为MainActivity创建一个对应的MainViewModel类，并让它继承自ViewModel，代码如下所示：![image-20240216185125698](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185125698.png)
+
+这里我们要实现一个计数器的功能，就可以在ViewModel中加入一个counter变量用于计数，如下所示：![image-20240216185146869](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185146869.png)
+
+现在我们需要在界面上添加一个按钮，每点击一次按钮就让计数器加1，并且把最新的计数显示在界面上。修改activity_main.xml中的代码，如下所示：![image-20240216185202100](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185202100.png)
+
+接着我们开始实现计数器的逻辑，修改MainActivity中的代码，如下所示：![image-20240216185214666](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185214666.png)
+
+我们绝对不可以直接去创建ViewModel的实例，而是一定要通过ViewModelProvider来获取ViewModel的实例，具体语法规则如下![image-20240216185236378](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185236378.png)
+
+现在可以运行一下程序了，效果如图13.3所示。![image-20240216185301693](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185301693.png)
+
+如果你尝试通过侧边工具栏旋转一下模拟器的屏幕，就会发现Activity虽然被重新创建了，但是计数器的数据却没有丢失，如图13.5所示。![image-20240216185322465](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185322465.png)
+
+
+
+###### 向**ViewModel**传递参数
+
+借助ViewModelProvider.Factory
+
+- 修改MainViewModel中的代码，如下所示：![image-20240216185415889](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185415889.png)
+
+新建一个MainViewModelFactory类，并让它实现ViewModelProvider.Factory接口，代码如下所示：![image-20240216185455472](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185455472.png)
+
+另外，我们还得在界面上添加一个清零按钮，方便用户手动将计数器清零。修改activity_main.xml中的代码，如下所示：![image-20240216185541288](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185541288.png)
+
+最后修改MainActivity中的代码，如下所示![image-20240216185551457](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185551457.png)
+
+![image-20240216185558148](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185558148.png)
+
+现在重新运行程序，点击数次“Plus One”按钮，然后退出程序并重新打开，你会发现，计数器的值是不会丢失的，如图13.6所示。![image-20240216185700470](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185700470.png)
+
+只有点击“Clear”按钮，计数器的值才会被清零，你可以自己尝试一下。
+
+
+
+##### **Lifecycles**
+
+- Lifecycles组件就是为了解决这个问题而出现的，它可以让任何一个类都能轻松感知到Activity的生命周期，同时又不需要在Activity中编写大量的逻辑处理。
+- 下面我们就通过具体的例子来学习Lifecycles组件的用法。新建一个MyObserver类，并让它实现LifecycleObserver接口，代码如下所示：![image-20240216185852403](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185852403.png)
+
+LifecycleObserver是一个空方法接口，只需要进行一下接口实现声明就可以了，而不去重写任何方法。
+
+接下来我们可以在MyObserver中定义任何方法，但是如果想要感知到Activity的生命周期，还得借助额外的注解功能才行。比如这里还是定义activityStart()和activityStop()这两个方法，代码如下所示：![image-20240216185933632](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185933632.png)	![image-20240216185939821](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216185939821.png)
+
+代码写到这里还是无法正常工作的，因为当Activity的生命周期发生变化的时候并没有人去通知MyObserver，而我们又不想像刚才一样在Activity中去一个个手动通知。这个时候就得借助LifecycleOwner这个好帮手了，它可以使用如下的语法结构让MyObserver得到通知：![image-20240216190043108](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216190043108.png)
+
+只要你的Activity是继承自AppCompatActivity的，或者你的Fragment是继承自androidx.fragment.app.Fragment的，那么它们本身就是一个LifecycleOwner的实例，这部分工作已经由AndroidX库自动帮我们完成了。也就是说，在MainActivity当中就可以这样写：![image-20240216190117019](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216190117019.png)![image-20240216190121991](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216190121991.png)
+
+只要添加这样一行代码，MyObserver就能自动感知到Activity的生命周期了,不过目前MyObserver虽然能够感知到Activity的生命周期发生了变化，却没有办法主动获知当前的生命周期状态。要解决这个问题也不难，只需要在MyObserver的构造函数中将Lifecycle对象传进来即可，如下所示：![image-20240216190657671](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216190657671.png)
+
+有了Lifecycle对象之后，我们就可以在任何地方调用lifecycle.currentState来主动获知当前的生命周期状态。
+
+lifecycle.currentState返回的生命周期状态是一个枚举类型，一共有INITIALIZED、DESTROYED、CREATED、STARTED、RESUMED这5种状态类型，它们与Activity的生命周期回调所对应的关系如图13.8所示。![image-20240216190733274](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216190733274.png)
+
+
+
+
+
+ 
+
+##### **LiveData**
+
+- LiveData是Jetpack提供的一种响应式编程组件，它可以包含任何类型的数据，并在数据发生变化的时候通知给观察者。LiveData特别适合与ViewModel结合在一起使用，虽然它也可以单独用在别的地方，但是在绝大多数情况下，它是使用在ViewModel当中的。
+
+
+
+###### **LiveData**的基本用法
+
+- 修改MainViewModel中的代码，如下所示：![image-20240216191115372](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191115372.png)
+
+接下来开始改造MainActivity，代码如下所示：![image-20240216191152346](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191152346.png)
+
+![image-20240216191159306](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191159306.png)
+
+lifecycle-livedata-ktx就是一个专门为Kotlin语言设计的库，这个库在2.2.0版本中加入了对observe()方法的语法扩展。我们只需要在app/build.gradle文件中添加如下依赖：![image-20240216191304471](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191304471.png)
+
+然后就可以使用如下语法结构的observe()方法了：![image-20240216191314366](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191314366.png)
+
+比较推荐的做法是，永远只暴露不可变的LiveData给外部。这样在非ViewModel中就只能观察LiveData的数据变化，而不能给LiveData设置数据。下面我们就看一下如何改造MainViewModel来实现这样的功能：![image-20240216191337218](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191337218.png)
+
+
+
+
+
+###### **map**和**switchMap**
+
+- 先来看map()方法，这个方法的作用是将实际包含数据的LiveData和仅用于观察数据的LiveData进行转换。那么什么情况下会用到这个方法呢？比如说有一个User类，User中包含用户的姓名和年龄，定义如下：![image-20240216191422668](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191422668.png)
+
+我们可以在ViewModel中创建一个相应的LiveData来包含User类型的数据，如下所示：![image-20240216191435086](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191435086.png)
+
+如果MainActivity中明确只会显示用户的姓名，而完全不关心用户的年龄，那么这个时候还将整个User类型的LiveData暴露给外部，就显得不那么合适了,而map()方法就是专门用于解决这种问题的，它可以将User类型的LiveData自由地转型成任意其他类型的LiveData，下面我们来看一下具体的用法：![image-20240216191545920](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191545920.png)
+
+- 前面我们所学的所有内容都有一个前提：LiveData对象的实例都是在ViewModel中创建的。然而在实际的项目中，不可能一直是这种理想情况，很有可能ViewModel中的某个LiveData对象是调用另外的方法获取的。下面就来模拟一下这种情况，新建一个Repository单例类，代码如下所示：![image-20240216191643612](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191643612.png)
+
+然后我们在MainViewModel中也定义一个getUser()方法，并且让它调用Repository的getUser()方法来获取LiveData对象：![image-20240216191705060](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191705060.png)
+
+修改MainViewModel中的代码，如下所示：
+
+![image-20240216191732135](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191732135.png)
+
+![image-20240216191738294](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191738294.png)
+
+为了让你能更清晰地理解switchMap()的用法，我们再来梳理一遍它的整体工作流程。首先，当外部调用MainViewModel的getUser()方法来获取用户数据时，并不会发起任何请求或者函数调用，只会将传入的userId值设置到userIdLiveData当中。一旦userIdLiveData的数据发生变化，那么观察userIdLiveData的switchMap()方法就会执行，并且调用我们编写的转换函数。然后在转换函数中调用Repository.getUser()方法获取真正的用户数据。同时，switchMap()方法会将Repository.getUser()方法返回的LiveData对象转换成一个可观察的LiveData对象，对于Activity而言，只要去观察这个LiveData对象就可以了。下面我们就来测试一下，修改activity_main.xml文件，在里面新增一个“Get User”按钮：![image-20240216191814789](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191814789.png)
+
+![image-20240216191821982](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191821982.png)
+
+然后修改MainActivity中的代码，如下所示：![image-20240216191830936](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191830936.png)
+
+现在重新运行程序，并一直点击“Get User”按钮，你会发现界面上的数字会一直在变，如图13.9所示。这是因为我们传入的userId值是随机的，同时也说明switchMap()方法确实已经正常工作了。![image-20240216191903487](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216191903487.png)
+
+
+
+
+
+##### **Room**
+
+###### 使用**Room**进行增删改查
+
+先来看一下Room的整体结构。它主要由Entity、Dao和Database这3部分组成，每个部分都有明确的职责，详细说明如下。
+
+- Entity。用于定义封装实际数据的实体类，每个实体类都会在数据库中有一张对应的表，并且表中的列是根据实体类中的字段自动生成的。
+
+- Dao。Dao是数据访问对象的意思，通常会在这里对数据库的各项操作进行封装，在实际编程的时候，逻辑层就不需要和底层数据库打交道了，直接和Dao层进行交互即可。
+
+- Database。用于定义数据库中的关键信息，包括数据库的版本号、包含哪些实体类以及提供Dao层的访问实例
+
+
+
+继续在JetpackTest项目上进行改造。首先要使用Room，需要在app/build.gradle文件中添加如下的依赖：![image-20240216192026705](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192026705.png)
+
+
+
+
+
+##### **WorkManager**
+
+###### **WorkManager**的基本用法
+
+- 要想使用WorkManager，需要先在app/build.gradle文件中添加如下的依赖：![image-20240216192131223](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192131223.png)
+
+- WorkManager的基本用法其实非常简单，主要分为以下3步：
+
+- (1) 定义一个后台任务，并实现具体的任务逻辑；
+
+  (2) 配置该后台任务的运行条件和约束信息，并构建后台任务请求；
+
+  (3) 将该后台任务请求传入WorkManager的enqueue()方法中，系统会在合适的时间运行。
+
+  第一步要定义一个后台任务，这里创建一个SimpleWorker类，代码如下所示：![image-20240216192158406](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192158406.png)
+
+接下来可以进入第二步，配置该后台任务的运行条件和约束信息。![image-20240216192310110](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192310110.png)
+
+PeriodicWorkRequest.Builder构造函数中传入的运行周期间隔不能短于15分钟，示例代码如下：![image-20240216192357315](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192357315.png)
+
+最后一步，将构建出的后台任务请求传入WorkManager的enqueue()方法中，系统就会在合适的时间去运行了：![image-20240216192410975](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192410975.png)
+
+- 现在我们来测试一下吧。首先在activity_main.xml中新增一个“Do Work”按钮，如下所示：![image-20240216192427398](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192427398.png)
+
+接下来修改MainActivity中的代码，如下所示![image-20240216192437463](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192437463.png)
+
+
+
+###### 使用**WorkManager**处理复杂的任务
+
+- 首先从最简单的看起，让后台任务在指定的延迟时间后运行，只需要借助setInitialDelay()方法就可以了，代码如下所示：![image-20240216192501865](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192501865.png)
+
+可以控制运行时间之后，我们再增加一些别的功能，比如说给后台任务请求添加标签：![image-20240216192515005](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192515005.png)
+
+那么添加了标签有什么好处呢？最主要的一个功能就是我们可以通过标签来取消后台任务请求：![image-20240216192533877](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192533877.png)
+
+除此之外，我们也可以使用如下代码来一次性取消所有后台任务请求：![image-20240216192550156](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192550156.png)
+
+doWork()方法中返回Result.success()和Result.failure()又有什么作用？这两个返回值其实就是用于通知任务运行结果的，我们可以使用如下代码对后台任务的运行结果进行监听![image-20240216192645433](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192645433.png)
+
+接下来，我们再来看一下WorkManager中比较有特色的一个功能——链式任务。假设这里定义了3个独立的后台任务：同步数据、压缩数据和上传数据。现在我们想要实现先同步、再压缩、最后上传的功能，就可以借助链式任务来实现，代码示例如下：![image-20240216192711585](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240216192711585.png)	
+
+
+
+##### 全局获取**Context**的技巧
+
+- Android提供了一个Application类，每当应用程序启动的时候，系统就会自动将这个类进行初始化。而我们可以定制一个自己的Application类，以便于管理程序内一些全局的状态信息，比如全局Context。
+
+  定制一个自己的Application其实并不复杂，首先需要创建一个MyApplication类继承自Application，代码如下所示![image-20240218151128281](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240218151128281.png)
+
+将Context设置成静态变量很容易会产生内存泄漏的问题，所以这是一种有风险的做法，因此Android Studio会给出如图14.1所示的警告提示![image-20240218151250733](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240218151250733.png)
+
+但是由于这里获取的不是Activity或Service中的Context，而是Application中的Context，它全局只会存在一份实例，并且在整个应用程序的生命周期内都不会回收，因此是不存在内存泄漏风险的。那么我们可以使用如下注解，让Android Studio忽略上述警告提示：![image-20240218151314062](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240218151314062.png)
+
+接下来我们还需要告知系统，当程序启动的时候应该初始化MyApplication类，而不是默认的Application类。这一步也很简单，在AndroidManifest.xml文件的<application>标签下进行指定就可以了，代码如下所示：![image-20240218151331123](C:\Users\30327\AppData\Roaming\Typora\typora-user-images\image-20240218151331123.png)
+
+这样我们就实现了一种全局获取Context的机制，之后不管你想在项目的任何地方使用Context，只需要调用一下MyApplication.context就可以了。
